@@ -24,6 +24,9 @@ cJSON *score_rooms = NULL;
 cJSON *score_items = NULL;
 int score_selected_room_id = -1;
 int score_self_value = 0;
+int practice_last_score = 0;
+int practice_last_total = 0;
+int practice_last_is_late = 0;
 
 int main()
 {
@@ -46,7 +49,7 @@ int main()
             needs_redraw = 0;
         }
 
-        if (current_screen == SCREEN_EXAM)
+        if (current_screen == SCREEN_EXAM || current_screen == SCREEN_PRACTICE)
         {
             static time_t last_tick = 0;
             if (time(NULL) > last_tick)
@@ -69,8 +72,9 @@ int main()
             {
                 line[strcspn(line, "\n")] = 0;
 
-                if (current_screen == SCREEN_EXAM)
+                if (current_screen == SCREEN_EXAM || current_screen == SCREEN_PRACTICE)
                 {
+                    int is_practice = (current_screen == SCREEN_PRACTICE);
                     if (strlen(line) == 0 || strcasecmp(line, "N") == 0)
                     {
                         if (current_q_idx < total_questions - 1)
@@ -90,23 +94,29 @@ int main()
                         else if (cmd >= 'A' && cmd <= 'D')
                         {
                             user_answers[current_q_idx] = cmd;
-                            cJSON *q = cJSON_GetArrayItem(exam_questions, current_q_idx);
-                            if (q && q->string)
+                            if (!is_practice)
                             {
-                                cJSON *req = cJSON_CreateObject();
-                                cJSON_AddStringToObject(req, "type", "UPDATE_ANSWER");
-                                cJSON_AddNumberToObject(req, "room_id", current_room_id);
-                                cJSON_AddStringToObject(req, "question_id", q->string);
-                                char ans_str[2] = {cmd, '\0'};
-                                cJSON_AddStringToObject(req, "answer", ans_str);
-                                send_json_request(req);
-                                cJSON_Delete(req);
+                                cJSON *q = cJSON_GetArrayItem(exam_questions, current_q_idx);
+                                if (q && q->string)
+                                {
+                                    cJSON *req = cJSON_CreateObject();
+                                    cJSON_AddStringToObject(req, "type", "UPDATE_ANSWER");
+                                    cJSON_AddNumberToObject(req, "room_id", current_room_id);
+                                    cJSON_AddStringToObject(req, "question_id", q->string);
+                                    char ans_str[2] = {cmd, '\0'};
+                                    cJSON_AddStringToObject(req, "answer", ans_str);
+                                    send_json_request(req);
+                                    cJSON_Delete(req);
+                                }
                             }
                             needs_redraw = 1;
                         }
                         else if (cmd == 'S')
                         {
-                            ui_handle_submit_exam();
+                            if (is_practice)
+                                ui_handle_submit_practice();
+                            else
+                                ui_handle_submit_exam();
                             current_screen = SCREEN_MENU;
                             needs_redraw = 1;
                         }
@@ -304,6 +314,11 @@ int main()
                             current_screen = SCREEN_SCORE_ROOM_LIST;
                             needs_redraw = 1;
                         }
+                    }
+                    else if (current_screen == SCREEN_PRACTICE_RESULT)
+                    {
+                        current_screen = SCREEN_MENU;
+                        needs_redraw = 1;
                     }
                     else if (current_screen == SCREEN_ROOM_LIST || current_screen == SCREEN_WAITING)
                     {

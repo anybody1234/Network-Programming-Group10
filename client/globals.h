@@ -14,6 +14,7 @@ typedef enum
     SCREEN_WAITING,
     SCREEN_EXAM,
     SCREEN_PRACTICE,
+    SCREEN_PRACTICE_RESULT,
     SCREEN_SCORE_ROLE,
     SCREEN_SCORE_ROOM_LIST,
     SCREEN_SCORE_VIEW
@@ -42,5 +43,9 @@ extern cJSON *score_rooms;
 extern cJSON *score_items;
 extern int score_selected_room_id;
 extern int score_self_value;
+
+extern int practice_last_score;
+extern int practice_last_total;
+extern int practice_last_is_late;
 
 #endif

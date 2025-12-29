@@ -210,24 +210,12 @@ void process_server_response(char *json_str)
         needs_redraw = 1;
     }
     else if (strcmp(type_str, "PRACTICE_RESULT") == 0) {
-        int score = cJSON_GetObjectItem(json, "score")->valueint;
-        int total = cJSON_GetObjectItem(json, "total")->valueint;
-        int is_late = cJSON_GetObjectItem(json, "is_late")->valueint;
+        practice_last_score = cJSON_GetObjectItem(json, "score")->valueint;
+        practice_last_total = cJSON_GetObjectItem(json, "total")->valueint;
+        practice_last_is_late = cJSON_GetObjectItem(json, "is_late")->valueint;
 
-        printf("\n\n==========================\n");
-        printf(" KET QUA LUYEN TAP\n");
-        printf(" Diem so: %d / %d\n", score, total);
-        
-        if (is_late == 1) {
-            printf(" [!] CANH BAO: Ban nop muon so voi quy dinh!\n");
-        } else {
-            printf(" [OK] Ban nop bai dung gio.\n");
-        }
-        printf("==========================\n");
-        printf("Nhan Enter de quay ve Menu..."); fflush(stdout);
-        
-        // Logic để user nhấn Enter rồi mới về Menu xử lý ở main.c
-        current_screen = SCREEN_MENU; 
+        current_screen = SCREEN_PRACTICE_RESULT;
+        needs_redraw = 1;
     }
     else
     {

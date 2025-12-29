@@ -165,6 +165,52 @@ void draw_exam()
     printf("> ");
     fflush(stdout);
 }
+
+static void draw_practice()
+{
+    clear_screen();
+    int elapsed = (int)(time(NULL) - local_start_time);
+    int remain = exam_remaining - elapsed;
+    if (remain < 0)
+        remain = 0;
+
+    printf("=== LUYEN TAP | Con lai: %02d:%02d ===\n", remain / 60, remain % 60);
+
+    if (exam_questions && total_questions > 0)
+    {
+        cJSON *q = cJSON_GetArrayItem(exam_questions, current_q_idx);
+        printf("\nCau %d/%d: %s\n", current_q_idx + 1, total_questions,
+               cJSON_GetObjectItem(q, "question_text")->valuestring);
+
+        cJSON *opts = cJSON_GetObjectItem(q, "options");
+        char my_ans = user_answers[current_q_idx];
+
+        printf(" %s A. %s\n", (my_ans == 'A' ? "[X]" : "[ ]"), cJSON_GetObjectItem(opts, "A")->valuestring);
+        printf(" %s B. %s\n", (my_ans == 'B' ? "[X]" : "[ ]"), cJSON_GetObjectItem(opts, "B")->valuestring);
+        printf(" %s C. %s\n", (my_ans == 'C' ? "[X]" : "[ ]"), cJSON_GetObjectItem(opts, "C")->valuestring);
+        printf(" %s D. %s\n", (my_ans == 'D' ? "[X]" : "[ ]"), cJSON_GetObjectItem(opts, "D")->valuestring);
+    }
+    printf("\n--------------------------------\n");
+    printf("Nhap dap an [A/B/C/D] roi Enter.\n");
+    printf("Dieu huong: [N]ext, [P]rev\n");
+    printf("Chuc nang: [S]ubmit (Nop bai), [Q]uit (Thoat)\n");
+    printf("> ");
+    fflush(stdout);
+}
+
+static void draw_practice_result()
+{
+    clear_screen();
+    printf("=== KET QUA LUYEN TAP ===\n");
+    printf("Diem so: %d / %d\n", practice_last_score, practice_last_total);
+    if (practice_last_is_late)
+        printf("[!] Ban nop muon so voi quy dinh!\n");
+    else
+        printf("[OK] Ban nop dung gio.\n");
+    printf("----------------------------\n");
+    printf("Nhan Enter de quay ve Menu...\n");
+    fflush(stdout);
+}
 void ui_handle_submit_exam()
 {
     cJSON *req = cJSON_CreateObject();
@@ -174,13 +220,43 @@ void ui_handle_submit_exam()
     cJSON_Delete(req);
     printf("\nDang nop bai... Vui long cho ket qua...\n");
 }
+
+void ui_handle_submit_practice()
+{
+    cJSON *req = cJSON_CreateObject();
+    cJSON_AddStringToObject(req, "type", "PRACTICE_SUBMIT");
+    cJSON_AddNumberToObject(req, "history_id", current_practice_id);
+
+    cJSON *ans_obj = cJSON_CreateObject();
+    if (exam_questions && ans_obj)
+    {
+        for (int i = 0; i < total_questions; i++)
+        {
+            char ans = user_answers[i];
+            if (ans)
+            {
+                cJSON *q = cJSON_GetArrayItem(exam_questions, i);
+                if (q && q->string)
+                {
+                    char ans_str[2] = {ans, '\0'};
+                    cJSON_AddStringToObject(ans_obj, q->string, ans_str);
+                }
+            }
+        }
+    }
+    cJSON_AddItemToObject(req, "answers", ans_obj);
+    send_json_request(req);
+    cJSON_Delete(req);
+    printf("\nDang nop ket qua luyen tap... Vui long cho...\n");
+}
 void ui_update_timer_only()
 {
     int elapsed = (int)(time(NULL) - local_start_time);
     int remain = exam_remaining - elapsed;
     if (remain < 0)
         remain = 0;
-    printf("\033[s\033[1;1H\033[K=== THI TRAC NGHIEM | Con lai: %02d:%02d ===\033[u", remain / 60, remain % 60);
+    const char *title = (current_screen == SCREEN_PRACTICE) ? "LUYEN TAP" : "THI TRAC NGHIEM";
+    printf("\033[s\033[1;1H\033[K=== %s | Con lai: %02d:%02d ===\033[u", title, remain / 60, remain % 60);
     fflush(stdout);
 }
 
@@ -199,6 +275,12 @@ void ui_render()
         break;
     case SCREEN_EXAM:
         draw_exam();
+        break;
+    case SCREEN_PRACTICE:
+        draw_practice();
+        break;
+    case SCREEN_PRACTICE_RESULT:
+        draw_practice_result();
         break;
     case SCREEN_SCORE_ROLE:
         draw_score_role();
