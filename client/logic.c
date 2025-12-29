@@ -132,11 +132,22 @@ void process_server_response(char *json_str)
         cJSON *r;
         cJSON_ArrayForEach(r, rooms)
         {
-            printf("ID: %d | %-15s | %d cau | Trang thai: %d\n",
+            int status_val = cJSON_GetObjectItem(r, "status")->valueint;
+            const char *status_text = "";
+            if (status_val == 0)
+                status_text = "Dang cho phong thi bat dau";
+            else if (status_val == 1)
+                status_text = "Phong thi dang bat dau";
+            else if (status_val == 2)
+                status_text = "Phong thi da ket thuc";
+            else
+                status_text = "Khong ro";
+
+            printf("ID: %d | %-15s | %d cau | Trang thai: %s\n",
                    cJSON_GetObjectItem(r, "id")->valueint,
                    cJSON_GetObjectItem(r, "room_name")->valuestring,
                    cJSON_GetObjectItem(r, "num_questions")->valueint,
-                   cJSON_GetObjectItem(r, "status")->valueint);
+                   status_text);
         }
         printf("\nNhan Enter de quay lai menu lenh...");
         fflush(stdout);
