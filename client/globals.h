@@ -13,7 +13,7 @@ typedef enum
     SCREEN_ROOM_LIST,
     SCREEN_WAITING,
     SCREEN_EXAM,
-
+    SCREEN_PRACTICE,
     SCREEN_SCORE_ROLE,
     SCREEN_SCORE_ROOM_LIST,
     SCREEN_SCORE_VIEW
@@ -27,7 +27,7 @@ extern int sockfd;
 extern ScreenState current_screen;
 extern char current_username[50];
 extern int current_room_id;
-
+extern int current_practice_id;
 extern int exam_duration;
 extern int exam_remaining;
 extern time_t local_start_time;

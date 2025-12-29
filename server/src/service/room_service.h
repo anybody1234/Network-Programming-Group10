@@ -12,4 +12,7 @@ void handle_submit_exam(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
 
 void handle_list_score_rooms(ClientSession *session, cJSON *req_json, MYSQL *db_conn);
 void handle_get_room_scores(ClientSession *session, cJSON *req_json, MYSQL *db_conn);
+
+void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn);
+void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn);
 #endif

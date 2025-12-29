@@ -814,3 +814,95 @@ int db_validate_question_id(MYSQL *conn, int room_id, const char *question_id) {
     mysql_free_result(res);
     return is_valid;
 }
+
+int db_generate_questions_for_practice(MYSQL *conn, int user_id, int num_questions, int duration, cJSON **out_questions)
+{
+    cJSON *questions_map = db_select_random_questions(conn, num_questions);
+    if (!questions_map)
+    {
+        printf("[Warning] Could not fetch questions for practice session\n");
+        return 0;
+    }
+    char *json_str = cJSON_PrintUnformatted(questions_map);
+    if(!json_str)
+    {
+        cJSON_Delete(questions_map);
+        return 0;
+    }
+    unsigned long json_len = strlen(json_str);
+    char *escaped_json = (char *)malloc(json_len * 2 + 1);
+    mysql_real_escape_string(conn, escaped_json, json_str, json_len);
+    char *update_query = (char *)malloc(strlen(escaped_json) + 256);
+    sprintf(update_query, 
+        "INSERT INTO practice_history (user_id, questions_data, user_answers, num_questions, duration_minutes, score, is_late) "
+        "VALUES (%d, '%s', '{}', %d, %d, 0, 0)", 
+        user_id, escaped_json, num_questions, duration);
+    free(escaped_json);
+    free(json_str);
+    if (mysql_query(conn, update_query)) {
+            fprintf(stderr, "Create practice failed: %s\n", mysql_error(conn));
+            cJSON_Delete(questions_map); 
+            return 0;
+        }
+    *out_questions = questions_map;
+    return (int)mysql_insert_id(conn);
+}
+
+int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *user_answers, int *out_score, int *out_total, int *out_is_late) 
+{
+    char query[512];
+    sprintf(query, 
+        "SELECT questions_data, "
+        "IF(NOW() > DATE_ADD(practiced_at, INTERVAL (duration_minutes + 1) MINUTE), 1, 0) as is_late "
+        "FROM practice_history WHERE id=%d AND user_id=%d", 
+        history_id, user_id);
+
+    if (mysql_query(conn, query)) return 0;
+    MYSQL_RES *res = mysql_store_result(conn);
+    if (!res) return 0;
+
+    MYSQL_ROW row = mysql_fetch_row(res);
+    if (!row) { mysql_free_result(res); return 0; }
+    cJSON *questions = cJSON_Parse(row[0]);
+    int is_late = atoi(row[1]); 
+    
+    mysql_free_result(res);
+
+    if (!questions) return 0;
+    int score = 0;
+    int total = 0;
+    cJSON *q_node;
+    cJSON_ArrayForEach(q_node, questions) {
+        total++;
+        char *q_id = q_node->string; 
+        cJSON *correct = cJSON_GetObjectItem(q_node, "correct_answer");
+        cJSON *user_ans = cJSON_GetObjectItem(user_answers, q_id);
+        
+        if (user_ans && correct && cJSON_IsString(user_ans) && cJSON_IsString(correct)) {
+            if (strcasecmp(user_ans->valuestring, correct->valuestring) == 0) {
+                score++;
+            }
+        }
+    }
+    *out_score = score;
+    *out_total = total;
+    *out_is_late = is_late;
+    char *ans_str = cJSON_PrintUnformatted(user_answers);
+    char *esc_ans = malloc(strlen(ans_str) * 2 + 1);
+    mysql_real_escape_string(conn, esc_ans, ans_str, strlen(ans_str));
+
+    char update_query[512 * 2];
+    sprintf(update_query, 
+            "UPDATE practice_history SET user_answers='%s', score=%d, is_late=%d WHERE id=%d", 
+            esc_ans, score, is_late, history_id);
+    
+    if (mysql_query(conn, update_query)) {
+        fprintf(stderr, "Update practice result failed: %s\n", mysql_error(conn));
+    }
+    
+    free(esc_ans); 
+    free(ans_str);
+    cJSON_Delete(questions);
+    
+    return 1;
+}

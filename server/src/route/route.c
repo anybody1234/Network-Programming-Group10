@@ -74,6 +74,12 @@ void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
     {
         handle_get_room_scores(client, json, db_conn);
     }
+    else if (strcmp(type, "PRACTICE_START") == 0) {
+        handle_practice_start(client, json, db_conn);
+    }
+    else if (strcmp(type, "PRACTICE_SUBMIT") == 0) {
+        handle_practice_submit(client, json, db_conn);
+    }
     else {
         send_json_response(client->sockfd, 400, "Unknown request type");
     }

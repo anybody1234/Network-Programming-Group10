@@ -36,6 +36,7 @@ void draw_menu()
     printf("3. Vao phong (Join)\n");
     printf("4. Dang xuat\n");
     printf("5. Xem diem\n");
+    printf("6. Luyen tap\n");
     printf("----------------------------\n");
     printf("Nhap lua chon > ");
     fflush(stdout);

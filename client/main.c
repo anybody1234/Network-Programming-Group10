@@ -18,7 +18,7 @@ char user_answers[MAX_QUESTIONS];
 int current_q_idx = 0;
 int total_questions = 0;
 int needs_redraw = 1;
-
+int current_practice_id = -1;
 char score_role[16] = "";
 cJSON *score_rooms = NULL;
 cJSON *score_items = NULL;
@@ -178,6 +178,26 @@ int main()
                         {
                             current_screen = SCREEN_SCORE_ROLE;
                             needs_redraw = 1;
+                        }
+                        else if (strcmp(line, "6") == 0) { 
+                            int n, m;
+                            printf("\n--- CAU HINH LUYEN TAP ---\n");
+                            printf("Nhap so luong cau hoi: "); 
+                            if (scanf("%d", &n) != 1) n = 10;
+                            
+                            printf("Nhap thoi gian lam bai (phut): ");
+                            if (scanf("%d", &m) != 1) m = 15;
+                            
+                            while(getchar()!='\n'); 
+                            cJSON *req = cJSON_CreateObject();
+                            cJSON_AddStringToObject(req, "type", "PRACTICE_START");
+                            cJSON_AddNumberToObject(req, "num_questions", n);
+                            cJSON_AddNumberToObject(req, "duration", m);
+                            
+                            send_json_request(req);
+                            cJSON_Delete(req);
+                            
+                            printf("Dang tai de thi..."); fflush(stdout);
                         }
                         else
                         {

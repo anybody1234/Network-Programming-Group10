@@ -193,6 +193,42 @@ void process_server_response(char *json_str)
         }
         needs_redraw = 1;
     }
+    else if (strcmp(type_str, "PRACTICE_START_OK") == 0) {
+        current_practice_id = cJSON_GetObjectItem(json, "history_id")->valueint;
+        
+        exam_duration = cJSON_GetObjectItem(json, "duration")->valueint;
+        exam_remaining = cJSON_GetObjectItem(json, "remaining")->valueint; // = duration
+        local_start_time = time(NULL);
+        if (exam_questions) cJSON_Delete(exam_questions);
+        exam_questions = cJSON_Duplicate(cJSON_GetObjectItem(json, "questions"), 1);
+        total_questions = cJSON_GetArraySize(exam_questions);
+    
+        memset(user_answers, 0, sizeof(user_answers));
+        current_q_idx = 0;
+        
+        current_screen = SCREEN_PRACTICE;
+        needs_redraw = 1;
+    }
+    else if (strcmp(type_str, "PRACTICE_RESULT") == 0) {
+        int score = cJSON_GetObjectItem(json, "score")->valueint;
+        int total = cJSON_GetObjectItem(json, "total")->valueint;
+        int is_late = cJSON_GetObjectItem(json, "is_late")->valueint;
+
+        printf("\n\n==========================\n");
+        printf(" KET QUA LUYEN TAP\n");
+        printf(" Diem so: %d / %d\n", score, total);
+        
+        if (is_late == 1) {
+            printf(" [!] CANH BAO: Ban nop muon so voi quy dinh!\n");
+        } else {
+            printf(" [OK] Ban nop bai dung gio.\n");
+        }
+        printf("==========================\n");
+        printf("Nhan Enter de quay ve Menu..."); fflush(stdout);
+        
+        // Logic để user nhấn Enter rồi mới về Menu xử lý ở main.c
+        current_screen = SCREEN_MENU; 
+    }
     else
     {
         if (message && strlen(message) > 0)

@@ -508,3 +508,54 @@ void handle_get_room_scores(ClientSession *session, cJSON *req_json, MYSQL *db_c
         return;
     }
 }
+
+void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn) {
+    if (!session->is_logged_in) return;
+    int num = 10;
+    int duration = 15; 
+    cJSON *n_item = cJSON_GetObjectItem(req, "num_questions");
+    if (cJSON_IsNumber(n_item)) num = n_item->valueint;
+    cJSON *d_item = cJSON_GetObjectItem(req, "duration");
+    if (cJSON_IsNumber(d_item)) duration = d_item->valueint;
+
+    cJSON *questions = NULL;
+    int history_id = db_generate_questions_for_practice(conn, session->user_id, num, duration, &questions);
+    if (history_id > 0) {
+        cJSON *resp = cJSON_CreateObject();
+        cJSON_AddStringToObject(resp, "type", "PRACTICE_START_OK");
+        cJSON_AddNumberToObject(resp, "history_id", history_id);
+        cJSON_AddNumberToObject(resp, "duration", duration * 60); 
+        cJSON_AddNumberToObject(resp, "remaining", duration * 60);
+        cJSON_AddItemToObject(resp, "questions", questions); 
+        
+        send_cjson_packet(session->sockfd, resp);
+        cJSON_Delete(resp);
+        
+        printf("[INFO] User %s started practice %d\n", session->username, history_id);
+    } else {
+        send_json_response(session->sockfd, 500, "Failed to create practice session (Not enough questions?)");
+    }
+}
+
+void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn) {
+    if (!session->is_logged_in) return;
+
+    int h_id = cJSON_GetObjectItem(req, "history_id")->valueint;
+    cJSON *answers = cJSON_GetObjectItem(req, "answers"); 
+
+    int score = 0, total = 0, is_late = 0;
+    if (db_submit_practice_result(conn, h_id, session->user_id, answers, &score, &total, &is_late)) {
+        cJSON *resp = cJSON_CreateObject();
+        cJSON_AddStringToObject(resp, "type", "PRACTICE_RESULT");
+        cJSON_AddNumberToObject(resp, "score", score);
+        cJSON_AddNumberToObject(resp, "total", total);
+        cJSON_AddNumberToObject(resp, "is_late", is_late);
+        
+        send_cjson_packet(session->sockfd, resp);
+        cJSON_Delete(resp);
+        printf("[INFO] User %s submitted practice %d. Score: %d/%d (Late: %d)\n", 
+               session->username, h_id, score, total, is_late);
+    } else {
+        send_json_response(session->sockfd, 500, "Error submitting practice");
+    }
+}
