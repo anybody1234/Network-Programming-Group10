@@ -523,12 +523,20 @@ void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn) {
     if (history_id > 0) {
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "PRACTICE_START_OK");
+        cJSON_AddNumberToObject(resp, "status", 200);
         cJSON_AddNumberToObject(resp, "history_id", history_id);
         cJSON_AddNumberToObject(resp, "duration", duration * 60); 
         cJSON_AddNumberToObject(resp, "remaining", duration * 60);
         cJSON_AddItemToObject(resp, "questions", questions); 
         
-        send_cjson_packet(session->sockfd, resp);
+        char *msg = cJSON_PrintUnformatted(resp);
+        char *packet = (char *)malloc(strlen(msg) + 10);
+        if (packet)
+        {
+            sprintf(packet, "%s\r\n", msg);
+            send(session->sockfd, packet, strlen(packet), 0);
+            free(packet);
+        }
         cJSON_Delete(resp);
         
         printf("[INFO] User %s started practice %d\n", session->username, history_id);
@@ -547,11 +555,19 @@ void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn) {
     if (db_submit_practice_result(conn, h_id, session->user_id, answers, &score, &total, &is_late)) {
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "PRACTICE_RESULT");
+        cJSON_AddNumberToObject(resp, "status", 200);
         cJSON_AddNumberToObject(resp, "score", score);
         cJSON_AddNumberToObject(resp, "total", total);
         cJSON_AddNumberToObject(resp, "is_late", is_late);
         
-        send_cjson_packet(session->sockfd, resp);
+        char *msg = cJSON_PrintUnformatted(resp);
+        char *packet = (char *)malloc(strlen(msg) + 10);
+        if (packet)
+        {
+            sprintf(packet, "%s\r\n", msg);
+            send(session->sockfd, packet, strlen(packet), 0);
+            free(packet);
+        }
         cJSON_Delete(resp);
         printf("[INFO] User %s submitted practice %d. Score: %d/%d (Late: %d)\n", 
                session->username, h_id, score, total, is_late);
