@@ -19,7 +19,7 @@ typedef enum
     SCREEN_SCORE_VIEW
 } ScreenState;
 
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "192.168.100.50"
 #define SERVER_PORT 5500
 #define MAX_QUESTIONS 100
 
