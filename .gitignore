@@ -1,0 +1,41 @@
+
+
+# Compiled binaries
+server/server
+*.o
+*.exe
+*.so
+*.a
+*.dylib
+
+# Logs
+*.log
+
+# IDE/Editor
+.DS_Store
+.vscode/
+.qtcreator/
+*.pro.user
+*.pro.user.*
+
+# Qt build directories
+build-*
+*-build-*
+build/
+debug/
+release/
+
+# Qt generated files
+moc_*.cpp
+moc_*.h
+ui_*.h
+qrc_*.cpp
+*.qm
+.qmake.stash
+
+
+# Qt Creator
+*.autosave
+*.user
+*.user.*
+build-client-Desktop-Debug/

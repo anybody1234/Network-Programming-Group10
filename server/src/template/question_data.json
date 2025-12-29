@@ -1,0 +1,35 @@
+{
+  "101": {
+    "question_text": "Hàm malloc() trả về giá trị gì nếu không cấp phát được bộ nhớ?",
+    "options": {
+      "A": "NULL",
+      "B": "0",
+      "C": "-1",
+      "D": "Giá trị rác"
+    },
+    "correct_answer": "A",
+    "score_weight": 1
+  },
+  "105": {
+    "question_text": "Cổng mặc định của HTTP là bao nhiêu?",
+    "options": {
+      "A": "21",
+      "B": "80",
+      "C": "443",
+      "D": "22"
+    },
+    "correct_answer": "B",
+    "score_weight": 1
+  },
+  "203": {
+    "question_text": "Trong mô hình OSI, TCP thuộc tầng nào?",
+    "options": {
+      "A": "Network",
+      "B": "Transport",
+      "C": "Session",
+      "D": "Application"
+    },
+    "correct_answer": "B",
+    "score_weight": 1
+  }
+}

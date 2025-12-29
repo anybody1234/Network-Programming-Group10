@@ -1,0 +1,11 @@
+{
+  "question_text": "Hàm malloc() trả về giá trị gì nếu không cấp phát được bộ nhớ?",
+  "options": {
+    "A": "NULL",
+    "B": "0",
+    "C": "-1",
+    "D": "Giá trị rác"
+  },
+  "correct_answer": "A",
+  "score_weight": 1
+}
