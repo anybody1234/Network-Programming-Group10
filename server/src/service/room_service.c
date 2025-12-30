@@ -54,20 +54,12 @@ void handle_create_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         return;
     }
     cJSON *resp = cJSON_CreateObject();
+    cJSON_AddStringToObject(resp, "type", "CREATE_ROOM_SUCCESS");
     cJSON_AddNumberToObject(resp, "status", 201);
     cJSON_AddNumberToObject(resp, "room_id", room_id);
     cJSON_AddStringToObject(resp, "message", "Room created successfully");
-    char *resp_str = cJSON_PrintUnformatted(resp);
-    size_t len = strlen(resp_str);
-    char *msg = (char *)malloc(len + 3);
-    if (msg)
-    {
-        sprintf(msg, "%s\r\n", resp_str);
-        send(session->sockfd, msg, strlen(msg), 0);
-        free(msg);
-    }
+    send_cjson_packet(session->sockfd, resp);
     cJSON_Delete(resp);
-    free(resp_str);
 }
 
 void handle_list_rooms(ClientSession *session, MYSQL *db_conn)
@@ -102,19 +94,9 @@ void handle_list_rooms(ClientSession *session, MYSQL *db_conn)
         cJSON_AddItemToArray(rooms_array, r_item);
     }
     cJSON_AddItemToObject(resp, "rooms", rooms_array);
-    char *json_str = cJSON_PrintUnformatted(resp);
-    size_t len = strlen(json_str);
-    char *msg_buffer = (char *)malloc(len + 3);
-    if (msg_buffer)
-    {
-        sprintf(msg_buffer, "%s\r\n", json_str);
-        send(session->sockfd, msg_buffer, strlen(msg_buffer), 0);
-        free(msg_buffer);
-    }
-    if (rooms)
-        free(rooms);
-    free(json_str);
+    send_cjson_packet(session->sockfd, resp);
     cJSON_Delete(resp);
+    if (rooms) free(rooms);
 }
 
 void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
@@ -153,11 +135,7 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         cJSON_AddStringToObject(resp, "type", "JOIN_SUCCESS");
         cJSON_AddNumberToObject(resp, "room_id", room_id);
         cJSON_AddStringToObject(resp, "message", "Joined room. Waiting for host to start...");
-        char *msg = cJSON_PrintUnformatted(resp);
-        char packet[1024];
-        snprintf(packet, sizeof(packet), "%s\r\n", msg);
-        send(session->sockfd, packet, strlen(packet), 0);
-        free(msg);
+        send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
     }
     else if (room.status == 1)
@@ -220,15 +198,7 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         {
             cJSON_AddObjectToObject(resp, "saved_answers");
         }
-        char *msg = cJSON_PrintUnformatted(resp);
-        char *packet = (char *)malloc(strlen(msg) + 10);
-        if (packet)
-        {
-            sprintf(packet, "%s\r\n", msg);
-            send(session->sockfd, packet, strlen(packet), 0);
-            free(packet);
-        }
-        free(msg);
+        send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
     }
     else
@@ -381,19 +351,7 @@ void handle_list_score_rooms(ClientSession *session, cJSON *req_json, MYSQL *db_
         cJSON_AddItemToArray(rooms_array, r);
     }
     cJSON_AddItemToObject(resp, "rooms", rooms_array);
-
-    char *json_str = cJSON_PrintUnformatted(resp);
-    if (json_str)
-    {
-        char *packet = (char *)malloc(strlen(json_str) + 3);
-        if (packet)
-        {
-            sprintf(packet, "%s\r\n", json_str);
-            send(session->sockfd, packet, strlen(packet), 0);
-            free(packet);
-        }
-        free(json_str);
-    }
+    send_cjson_packet(session->sockfd, resp);
     if (rooms)
         free(rooms);
     cJSON_Delete(resp);
@@ -528,15 +486,7 @@ void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn) {
         cJSON_AddNumberToObject(resp, "duration", duration * 60); 
         cJSON_AddNumberToObject(resp, "remaining", duration * 60);
         cJSON_AddItemToObject(resp, "questions", questions); 
-        
-        char *msg = cJSON_PrintUnformatted(resp);
-        char *packet = (char *)malloc(strlen(msg) + 10);
-        if (packet)
-        {
-            sprintf(packet, "%s\r\n", msg);
-            send(session->sockfd, packet, strlen(packet), 0);
-            free(packet);
-        }
+        send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
         
         printf("[INFO] User %s started practice %d\n", session->username, history_id);
@@ -559,15 +509,7 @@ void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn) {
         cJSON_AddNumberToObject(resp, "score", score);
         cJSON_AddNumberToObject(resp, "total", total);
         cJSON_AddNumberToObject(resp, "is_late", is_late);
-        
-        char *msg = cJSON_PrintUnformatted(resp);
-        char *packet = (char *)malloc(strlen(msg) + 10);
-        if (packet)
-        {
-            sprintf(packet, "%s\r\n", msg);
-            send(session->sockfd, packet, strlen(packet), 0);
-            free(packet);
-        }
+        send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
         printf("[INFO] User %s submitted practice %d. Score: %d/%d (Late: %d)\n", 
                session->username, h_id, score, total, is_late);

@@ -14,6 +14,19 @@ void process_server_response(char *json_str)
     int code = status ? status->valueint : 0;
     char *type_str = type ? type->valuestring : "";
     char *message = msg ? msg->valuestring : "";
+    if (code >= 400) {
+        printf("\n[LOI SERVER %d] %s\n", code, message);
+        if (current_screen == SCREEN_AUTH) {
+             printf("Nhan Enter de thu lai..."); fflush(stdout);
+        }
+        else if (current_screen == SCREEN_EXAM || current_screen == SCREEN_PRACTICE) {
+            printf("\n>>> LOI XAY RA: %s <<<\n", message);
+            printf("Nhan Enter de tiep tuc...\n"); 
+            fflush(stdout);
+        }
+        cJSON_Delete(json);
+        return; 
+    }
     if (current_screen == SCREEN_AUTH)
     {
         if (code == 200 && strstr(message, "Login successful"))
@@ -27,12 +40,7 @@ void process_server_response(char *json_str)
             printf("Nhan Enter de tiep tuc...");
             fflush(stdout);
         }
-        else if (code >= 400)
-        {
-            printf("\n[LOI] %s\n", message);
-            printf("Nhan Enter de thu lai...");
-            fflush(stdout);
-        }
+
     }
     else if (code == 200 && strcmp(type_str, "JOIN_SUCCESS") == 0)
     {
@@ -40,7 +48,7 @@ void process_server_response(char *json_str)
         current_screen = SCREEN_WAITING;
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "EXAM_START") == 0)
+    else if (code == 300 && (strcmp(type_str, "EXAM_START") == 0))
     {
         cJSON *r_id_item = cJSON_GetObjectItem(json, "room_id");
         if (r_id_item)
@@ -125,7 +133,7 @@ void process_server_response(char *json_str)
         }
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "ROOM_LIST") == 0)
+    else if (code == 200 && strcmp(type_str, "ROOM_LIST") == 0)
     {
         printf("\n\n--- DANH SACH PHONG ---\n");
         cJSON *rooms = cJSON_GetObjectItem(json, "rooms");
@@ -152,7 +160,11 @@ void process_server_response(char *json_str)
         printf("\nNhan Enter de quay lai menu lenh...");
         fflush(stdout);
     }
-    else if (strcmp(type_str, "SCORE_ROOM_LIST") == 0)
+    else if (code == 201 && strcmp(type_str, "CREATE_ROOM_SUCCESS") == 0) {
+        printf("\n[THANH CONG] %s. ID phong: %d\n", message, cJSON_GetObjectItem(json, "room_id")->valueint);
+        printf("Nhan Enter de tiep tuc..."); fflush(stdout);
+    }
+    else if (code == 200 && strcmp(type_str, "SCORE_ROOM_LIST") == 0)
     {
         cJSON *rooms = cJSON_GetObjectItem(json, "rooms");
         if (score_rooms)
@@ -166,7 +178,7 @@ void process_server_response(char *json_str)
         }
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "SCORE_SELF") == 0)
+    else if (code == 200 && strcmp(type_str, "SCORE_SELF") == 0)
     {
         cJSON *rid = cJSON_GetObjectItem(json, "room_id");
         cJSON *sc = cJSON_GetObjectItem(json, "score");
@@ -176,7 +188,7 @@ void process_server_response(char *json_str)
             score_self_value = sc->valueint;
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "SCORE_ALL") == 0)
+    else if (code == 200 && strcmp(type_str, "SCORE_ALL") == 0)
     {
         cJSON *rid = cJSON_GetObjectItem(json, "room_id");
         cJSON *arr = cJSON_GetObjectItem(json, "scores");
@@ -193,7 +205,7 @@ void process_server_response(char *json_str)
         }
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "PRACTICE_START_OK") == 0) {
+    else if (code == 200 && strcmp(type_str, "PRACTICE_START_OK") == 0) {
         current_practice_id = cJSON_GetObjectItem(json, "history_id")->valueint;
         
         exam_duration = cJSON_GetObjectItem(json, "duration")->valueint;
@@ -209,7 +221,7 @@ void process_server_response(char *json_str)
         current_screen = SCREEN_PRACTICE;
         needs_redraw = 1;
     }
-    else if (strcmp(type_str, "PRACTICE_RESULT") == 0) {
+    else if (code == 200 && strcmp(type_str, "PRACTICE_RESULT") == 0) {
         practice_last_score = cJSON_GetObjectItem(json, "score")->valueint;
         practice_last_total = cJSON_GetObjectItem(json, "total")->valueint;
         practice_last_is_late = cJSON_GetObjectItem(json, "is_late")->valueint;

@@ -8,5 +8,5 @@
 #include <cjson/cJSON.h>
 
 void send_json_response(int sockfd, int status, const char *message);
-
+void send_cjson_packet(int sockfd, cJSON *json);
 #endif

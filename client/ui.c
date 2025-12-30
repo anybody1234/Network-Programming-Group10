@@ -304,7 +304,7 @@ void ui_handle_login_input()
     scanf("%s", user);
     printf("Password: ");
     scanf("%s", pass);
-    flush_input(); // [FIX] Xóa bộ đệm
+    flush_input(); 
 
     cJSON *req = cJSON_CreateObject();
     cJSON_AddStringToObject(req, "type", "LOGIN");
@@ -348,7 +348,7 @@ void ui_handle_create_room()
     scanf("%d", &m);
     printf("Thoi gian bat dau (YYYY-MM-DD HH:MM:SS): ");
     scanf(" %[^\n]", start_time);
-    flush_input(); // [FIX] Xóa bộ đệm
+    flush_input(); 
 
     cJSON *req = cJSON_CreateObject();
     cJSON_AddStringToObject(req, "type", "CREATE_ROOM");

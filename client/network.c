@@ -2,15 +2,13 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "logic.h"
-#define BUFF_SIZE 4096
-#define RECV_BUF_SIZE 32768
-
+#include "globals.h"
+int sockfd = -1;
 int connect_to_server()
 {
     struct sockaddr_in serv_addr;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        return -1;
+    if (sockfd < 0) return -1;
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(SERVER_PORT);
@@ -25,19 +23,23 @@ int connect_to_server()
 
 void send_json_request(cJSON *req)
 {
-    if (sockfd == -1)
-        return;
+    if (sockfd == -1) return;
     char *json_str = cJSON_PrintUnformatted(req);
-    char packet[BUFF_SIZE];
-    snprintf(packet, sizeof(packet), "%s\r\n", json_str);
-    send(sockfd, packet, strlen(packet), 0);
+    if (!json_str) return;
+    size_t len = strlen(json_str);
+    char *packet = (char*)malloc(len + 3);
+    if (packet) {
+        sprintf(packet, "%s\r\n", json_str);
+        send(sockfd, packet, strlen(packet), 0);
+        free(packet);
+    }
     free(json_str);
 }
 
 void *recv_thread_func(void *arg)
 {
-    char buffer[BUFF_SIZE];
-    static char acc_buffer[RECV_BUF_SIZE];
+    char buffer[4096];
+    static char acc_buffer[BUFF_SIZE];
     static int acc_len = 0;
 
     while (1)
@@ -50,7 +52,7 @@ void *recv_thread_func(void *arg)
             exit(0);
         }
 
-        if (acc_len + n >= RECV_BUF_SIZE)
+        if (acc_len + n >= BUFF_SIZE)
         {
             acc_len = 0;
             continue;
