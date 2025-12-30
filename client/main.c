@@ -85,7 +85,8 @@ int main()
                     else
                     {
                         char cmd = toupper(line[0]);
-                        if (cmd == 'P') {
+                        if (cmd == 'P')
+                        {
                             if (current_q_idx > 0)
                                 current_q_idx--;
                             needs_redraw = 1;
@@ -180,33 +181,45 @@ int main()
                         }
                         else if (strcmp(line, "4") == 0)
                         {
+                            /* send LOGOUT to server and clear local session state */
+                            cJSON *req = cJSON_CreateObject();
+                            cJSON_AddStringToObject(req, "type", "LOGOUT");
+                            send_json_request(req);
+                            cJSON_Delete(req);
                             current_screen = SCREEN_AUTH;
                             needs_redraw = 1;
+                            current_username[0] = '\0';
+                            current_room_id = -1;
                         }
                         else if (strcmp(line, "5") == 0)
                         {
                             current_screen = SCREEN_SCORE_ROLE;
                             needs_redraw = 1;
                         }
-                        else if (strcmp(line, "6") == 0) { 
+                        else if (strcmp(line, "6") == 0)
+                        {
                             int n, m;
                             printf("\n--- CAU HINH LUYEN TAP ---\n");
-                            printf("Nhap so luong cau hoi: "); 
-                            if (scanf("%d", &n) != 1) n = 10;
-                            
+                            printf("Nhap so luong cau hoi: ");
+                            if (scanf("%d", &n) != 1)
+                                n = 10;
+
                             printf("Nhap thoi gian lam bai (phut): ");
-                            if (scanf("%d", &m) != 1) m = 15;
-                            
-                            while(getchar()!='\n'); 
+                            if (scanf("%d", &m) != 1)
+                                m = 15;
+
+                            while (getchar() != '\n')
+                                ;
                             cJSON *req = cJSON_CreateObject();
                             cJSON_AddStringToObject(req, "type", "PRACTICE_START");
                             cJSON_AddNumberToObject(req, "num_questions", n);
                             cJSON_AddNumberToObject(req, "duration", m);
-                            
+
                             send_json_request(req);
                             cJSON_Delete(req);
-                            
-                            printf("Dang tai de thi..."); fflush(stdout);
+
+                            printf("Dang tai de thi...");
+                            fflush(stdout);
                         }
                         else
                         {

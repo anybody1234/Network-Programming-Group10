@@ -1,0 +1,7 @@
+[30/12/2025 23:01:49]$127.0.0.1$$100|Connected to the server
+[30/12/2025 23:02:08]$127.0.0.1$LOGIN|user:long$200|Login successful
+[30/12/2025 23:02:22]$127.0.0.1$LOGIN|user:liem$409|You are already logged in
+[30/12/2025 23:06:20]$127.0.0.1$$100|Connected to the server
+[30/12/2025 23:06:24]$127.0.0.1$LOGIN|user:long$200|Login successful
+[30/12/2025 23:06:27]$127.0.0.1$LOGOUT$202|Logout successful
+[30/12/2025 23:06:42]$127.0.0.1$LOGIN|user:liem$200|Login successful

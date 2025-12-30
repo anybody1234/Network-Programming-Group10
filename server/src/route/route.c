@@ -73,17 +73,7 @@ void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
     }
     else if (strcmp(type, "LOGOUT") == 0)
     {
-        if (client->is_logged_in)
-        {
-            client->is_logged_in = 0;
-            client->user_id = -1;
-            client->username[0] = '\0';
-            send_json_response(client->sockfd, 202, "Logout successful");
-        }
-        else
-        {
-            send_json_response(client->sockfd, 401, "Not logged in");
-        }
+        handle_logout(client);
     }
     else if (strcmp(type, "CREATE_ROOM") == 0)
     {

@@ -122,3 +122,22 @@ void handle_client_disconnection(ClientSession *session)
                session->is_logged_in ? session->username : "(not logged in)");
     }
 }
+
+void handle_logout(ClientSession *session)
+{
+    if (!session)
+        return;
+    if (session->is_logged_in)
+    {
+        session->is_logged_in = 0;
+        session->user_id = -1;
+        session->failed_login_count = 0;
+        session->username[0] = '\0';
+        send_json_response(session->sockfd, 202, "Logout successful");
+        printf("[INFO] Client on fd %d logged out\n", session->sockfd);
+    }
+    else
+    {
+        send_json_response(session->sockfd, 401, "Not logged in");
+    }
+}

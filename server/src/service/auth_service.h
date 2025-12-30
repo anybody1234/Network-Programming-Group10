@@ -19,4 +19,5 @@ typedef struct ClientSession
 void handle_register(int sockfd, cJSON *json_req, MYSQL *db_conn);
 void handle_login(ClientSession *session, cJSON *json_req, MYSQL *db_conn);
 void handle_client_disconnection(ClientSession *session);
+void handle_logout(ClientSession *session);
 #endif
