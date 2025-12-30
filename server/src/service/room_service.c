@@ -173,17 +173,17 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
             }
             return;
         }
-            if (is_participant_score != -1)
+        if (is_participant_score != -1)
+        {
+            char msg[128];
+            sprintf(msg, "Forbidden: You have already submitted the exam with score recorded with score: %d", is_participant_score);
+            send_json_response(session->sockfd, 200, msg);
+            if (room.questions_data)
             {
-                char msg[128];
-                sprintf(msg, "Forbidden: You have already submitted the exam with score recorded with score: %d", is_participant_score);
-                send_json_response(session->sockfd, 409, msg);
-                if (room.questions_data)
-                {
-                    free(room.questions_data);
-                }
-                return;
+                free(room.questions_data);
             }
+            return;
+        }
         time_t start_epoch = (time_t)atoll(room.start_time);
         time_t now = time(NULL);
         int elapsed = (int)(now - start_epoch);
@@ -198,7 +198,7 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         char *saved_answers_str = db_get_user_answers_json(db_conn, room_id, session->user_id);
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "EXAM_START");
-            cJSON_AddNumberToObject(resp, "status", 200);
+        cJSON_AddNumberToObject(resp, "status", 300);
         cJSON_AddNumberToObject(resp, "room_id", room_id);
         cJSON_AddStringToObject(resp, "message", "Resuming exam...");
         cJSON_AddNumberToObject(resp, "duration", room.duration_minutes * 60);

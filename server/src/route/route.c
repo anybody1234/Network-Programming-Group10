@@ -9,11 +9,10 @@
 #include "../service/room_service.h"
 void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
 {
-    protocol_set_current_request_for_log(json_str);
-    printf("[DEBUG] User '%s'| Id '%d': %s\n", client->is_logged_in ? client->username : "Guest", client->user_id, json_str);
     cJSON *json = cJSON_Parse(json_str);
     if (json == NULL)
     {
+        protocol_set_current_request_for_log("INVALID_JSON");
         send_json_response(client->sockfd, 400, "Invalid JSON format");
         protocol_clear_current_request_for_log();
         return;
@@ -28,6 +27,42 @@ void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
         return;
     }
     char *type = type_item->valuestring;
+
+    /* build a sanitized request string for logging (avoid sensitive fields) */
+    char san[256];
+    san[0] = '\0';
+    snprintf(san, sizeof(san), "%s", type);
+    cJSON *u = cJSON_GetObjectItem(json, "username");
+    if (cJSON_IsString(u))
+    {
+        strncat(san, "|user:", sizeof(san) - strlen(san) - 1);
+        strncat(san, u->valuestring, sizeof(san) - strlen(san) - 1);
+    }
+    cJSON *r = cJSON_GetObjectItem(json, "room_id");
+    if (cJSON_IsNumber(r))
+    {
+        char numbuf[32];
+        snprintf(numbuf, sizeof(numbuf), "|room:%d", r->valueint);
+        strncat(san, numbuf, sizeof(san) - strlen(san) - 1);
+    }
+    cJSON *q = cJSON_GetObjectItem(json, "question_id");
+    if (cJSON_IsNumber(q))
+    {
+        char numbuf[32];
+        snprintf(numbuf, sizeof(numbuf), "|q:%d", q->valueint);
+        strncat(san, numbuf, sizeof(san) - strlen(san) - 1);
+    }
+    cJSON *h = cJSON_GetObjectItem(json, "history_id");
+    if (cJSON_IsNumber(h))
+    {
+        char numbuf[32];
+        snprintf(numbuf, sizeof(numbuf), "|history:%d", h->valueint);
+        strncat(san, numbuf, sizeof(san) - strlen(san) - 1);
+    }
+
+    protocol_set_current_request_for_log(san);
+
+    printf("[DEBUG] User '%s'| Id '%d': %s\n", client->is_logged_in ? client->username : "Guest", client->user_id, san);
     if (strcmp(type, "REGISTER") == 0)
     {
         handle_register(client->sockfd, json, db_conn);

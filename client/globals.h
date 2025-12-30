@@ -7,7 +7,8 @@
 #include <time.h>
 #include <cjson/cJSON.h>
 
-typedef enum {
+typedef enum
+{
     SCREEN_AUTH,
     SCREEN_MENU,
     SCREEN_ROOM_LIST,
@@ -22,9 +23,8 @@ typedef enum {
 
 #define SERVER_IP "192.168.100.50"
 #define SERVER_PORT 5500
-#define BUFF_SIZE 32768  
+#define BUFF_SIZE 32768
 #define MAX_QUESTIONS 100
-
 
 // Network
 extern int sockfd;
