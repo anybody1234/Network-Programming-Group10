@@ -54,7 +54,7 @@ char *db_get_user_answers_json(MYSQL *conn, int room_id, int user_id);
 
 int db_get_starting_rooms(MYSQL *conn, Room **rooms);
 void db_update_room_status(MYSQL *conn, int room_id, int new_status);
-int db_get_room_participants(MYSQL *conn, int room_id, int **user_ids);
+int db_get_room_participants(MYSQL *conn, int room_id, int **user_ids, int status_room);
 
 int db_update_user_answers(MYSQL *conn, int room_id, int user_id, const char *question_id, const char *answer);
 int db_recalculate_score(MYSQL *conn, int room_id, int user_id);

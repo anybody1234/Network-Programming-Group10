@@ -417,10 +417,10 @@ void db_update_room_status(MYSQL *conn, int room_id, int new_status)
         fprintf(stderr, "Update status failed: %s\n", mysql_error(conn));
     }
 }
-int db_get_room_participants(MYSQL *conn, int room_id, int **user_ids)
+int db_get_room_participants(MYSQL *conn, int room_id, int **user_ids, int status_room)
 {
     char query[128];
-    sprintf(query, "SELECT user_id FROM room_participants WHERE room_id = %d", room_id);
+    sprintf(query, "SELECT user_id FROM room_participants WHERE room_id = %d AND status = %d", room_id, status_room);
 
     if (mysql_query(conn, query))
         return 0;

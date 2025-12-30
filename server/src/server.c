@@ -77,7 +77,7 @@ void *room_monitor_thread(void *arg)
             snprintf(packet, sizeof(packet), "%s\r\n", msg);
             printf("[Monitor] Sending to room %d: %s\n", r_id, packet);
             int *user_ids = NULL;
-            int u_count = db_get_room_participants(thread_db, r_id, &user_ids);
+            int u_count = db_get_room_participants(thread_db, r_id, &user_ids, 0);
             pthread_mutex_lock(&clients_mutex);
             for (int u = 0; u < u_count; u++)
             {
@@ -119,7 +119,7 @@ void *room_monitor_thread(void *arg)
             snprintf(packet, sizeof(packet), "%s\r\n", msg);
 
             int *user_ids = NULL;
-            int u_count = db_get_room_participants(thread_db, r_id, &user_ids);
+            int u_count = db_get_room_participants(thread_db, r_id, &user_ids, 0);
 
             pthread_mutex_lock(&clients_mutex);
             for (int u = 0; u < u_count; u++)

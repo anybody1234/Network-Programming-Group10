@@ -38,14 +38,14 @@ void send_json_request(cJSON *req)
 
 void *recv_thread_func(void *arg)
 {
-    char buffer[4096];
+    char buffer[BUFF_SIZE];
     static char acc_buffer[BUFF_SIZE];
     static int acc_len = 0;
 
     while (1)
     {
-        memset(buffer, 0, BUFF_SIZE);
-        int n = recv(sockfd, buffer, BUFF_SIZE - 1, 0);
+        memset(buffer, 0, sizeof(buffer));
+        int n = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
         if (n <= 0)
         {
             printf("\n[DISCONNECT TO SERVER]\n");
