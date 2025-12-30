@@ -25,8 +25,11 @@ typedef enum {
 #define BUFF_SIZE 32768  
 #define MAX_QUESTIONS 100
 
+
 // Network
 extern int sockfd;
+
+// App State
 extern ScreenState current_screen;
 extern char current_username[50];
 extern int needs_redraw;
@@ -48,7 +51,6 @@ extern cJSON *score_items;
 extern int score_selected_room_id;
 extern int score_self_value;
 
-// Practice
 extern int current_practice_id;
 extern int practice_last_score;
 extern int practice_last_total;

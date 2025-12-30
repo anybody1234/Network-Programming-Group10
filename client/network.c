@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 #include "logic.h"
 #include "globals.h"
-int sockfd = -1;
+
 int connect_to_server()
 {
     struct sockaddr_in serv_addr;

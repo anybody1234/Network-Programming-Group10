@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <sys/select.h>
 #include <unistd.h>
-
+int sockfd = -1;
 ScreenState current_screen = SCREEN_AUTH;
 char current_username[50] = "";
 int current_room_id = -1;
