@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+
 #include "room_service.h"
 #include "../config/db.h"
 #include "../utils/net_utils.h"
@@ -5,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 void handle_create_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
 {
     if (!session->is_logged_in)
@@ -29,6 +32,25 @@ void handle_create_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
     if (num_questions <= 0 || duration <= 0)
     {
         send_json_response(session->sockfd, 400, "Invalid number of questions or duration");
+        return;
+    }
+    struct tm tm_start = {0};
+    if (strptime(start_time, "%Y-%m-%d %H:%M:%S", &tm_start) == NULL) 
+    {
+        send_json_response(session->sockfd, 400, "Invalid date format. Use: YYYY-MM-DD HH:MM:SS");
+        return;
+    }
+    time_t t_start = mktime(&tm_start);
+    time_t t_now = time(NULL);
+
+    if (t_start == -1) 
+    {
+        send_json_response(session->sockfd, 400, "Invalid time value");
+        return;
+    }
+    if (t_start < t_now)
+    {
+        send_json_response(session->sockfd, 400, "Start time cannot be in the past");
         return;
     }
     int total_questions = db_total_questions(db_conn);
