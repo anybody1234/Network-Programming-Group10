@@ -15,7 +15,7 @@ void process_server_response(char *json_str)
     char *type_str = type ? type->valuestring : "";
     char *message = msg ? msg->valuestring : "";
     if (code >= 400) {
-        printf("\n[ERR %d] %s\n", code, message);
+        printf("\n[ERR] %s\n", message);
         if (current_screen == SCREEN_AUTH) {
             printf("Nhan Enter de thu lai..."); 
             fflush(stdout);
