@@ -35,13 +35,13 @@ int db_login_account(MYSQL *conn, const char *username, const char *password)
     if (mysql_query(conn, queury))
     {
         fprintf(stderr, "mysql_query() failed %s\n", mysql_error(conn));
-        return -1;
+        return -2;
     }
     MYSQL_RES *res = mysql_store_result(conn);
     if (!res)
     {
         fprintf(stderr, "mysql_store_result() failed: %s\n", mysql_error(conn));
-        return 0;
+        return -2;
     }
     MYSQL_ROW row = mysql_fetch_row(res);
     int result = 0;
@@ -797,18 +797,22 @@ int db_get_room_scores(MYSQL *conn, int room_id, RoomScoreItem **items)
     mysql_free_result(res);
     return count;
 }
-int db_validate_question_id(MYSQL *conn, int room_id, const char *question_id) {
+int db_validate_question_id(MYSQL *conn, int room_id, const char *question_id)
+{
     char query[256];
     sprintf(query, "SELECT JSON_CONTAINS_PATH(questions_data, 'one', '$.\"%s\"') FROM rooms WHERE id = %d", question_id, room_id);
-    if (mysql_query(conn, query)) {
+    if (mysql_query(conn, query))
+    {
         fprintf(stderr, "db_validate_question_id failed: %s\n", mysql_error(conn));
         return 0;
     }
     MYSQL_RES *res = mysql_store_result(conn);
-    if (!res) return 0;
+    if (!res)
+        return 0;
     MYSQL_ROW row = mysql_fetch_row(res);
     int is_valid = 0;
-    if (row && row[0] && atoi(row[0]) == 1) {
+    if (row && row[0] && atoi(row[0]) == 1)
+    {
         is_valid = 1;
     }
     mysql_free_result(res);
@@ -824,7 +828,7 @@ int db_generate_questions_for_practice(MYSQL *conn, int user_id, int num_questio
         return 0;
     }
     char *json_str = cJSON_PrintUnformatted(questions_map);
-    if(!json_str)
+    if (!json_str)
     {
         cJSON_Delete(questions_map);
         return 0;
@@ -833,53 +837,64 @@ int db_generate_questions_for_practice(MYSQL *conn, int user_id, int num_questio
     char *escaped_json = (char *)malloc(json_len * 2 + 1);
     mysql_real_escape_string(conn, escaped_json, json_str, json_len);
     char *update_query = (char *)malloc(strlen(escaped_json) + 256);
-    sprintf(update_query, 
-        "INSERT INTO practice_history (user_id, questions_data, user_answers, num_questions, duration_minutes, score, is_late) "
-        "VALUES (%d, '%s', '{}', %d, %d, 0, 0)", 
-        user_id, escaped_json, num_questions, duration);
+    sprintf(update_query,
+            "INSERT INTO practice_history (user_id, questions_data, user_answers, num_questions, duration_minutes, score, is_late) "
+            "VALUES (%d, '%s', '{}', %d, %d, 0, 0)",
+            user_id, escaped_json, num_questions, duration);
     free(escaped_json);
     free(json_str);
-    if (mysql_query(conn, update_query)) {
-            fprintf(stderr, "Create practice failed: %s\n", mysql_error(conn));
-            cJSON_Delete(questions_map); 
-            return 0;
-        }
+    if (mysql_query(conn, update_query))
+    {
+        fprintf(stderr, "Create practice failed: %s\n", mysql_error(conn));
+        cJSON_Delete(questions_map);
+        return 0;
+    }
     *out_questions = questions_map;
     return (int)mysql_insert_id(conn);
 }
 
-int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *user_answers, int *out_score, int *out_total, int *out_is_late) 
+int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *user_answers, int *out_score, int *out_total, int *out_is_late)
 {
     char query[512];
-    sprintf(query, 
-        "SELECT questions_data, "
-        "IF(NOW() > DATE_ADD(practiced_at, INTERVAL (duration_minutes + 1) MINUTE), 1, 0) as is_late "
-        "FROM practice_history WHERE id=%d AND user_id=%d", 
-        history_id, user_id);
+    sprintf(query,
+            "SELECT questions_data, "
+            "IF(NOW() > DATE_ADD(practiced_at, INTERVAL (duration_minutes + 1) MINUTE), 1, 0) as is_late "
+            "FROM practice_history WHERE id=%d AND user_id=%d",
+            history_id, user_id);
 
-    if (mysql_query(conn, query)) return 0;
+    if (mysql_query(conn, query))
+        return 0;
     MYSQL_RES *res = mysql_store_result(conn);
-    if (!res) return 0;
+    if (!res)
+        return 0;
 
     MYSQL_ROW row = mysql_fetch_row(res);
-    if (!row) { mysql_free_result(res); return 0; }
+    if (!row)
+    {
+        mysql_free_result(res);
+        return 0;
+    }
     cJSON *questions = cJSON_Parse(row[0]);
-    int is_late = atoi(row[1]); 
-    
+    int is_late = atoi(row[1]);
+
     mysql_free_result(res);
 
-    if (!questions) return 0;
+    if (!questions)
+        return 0;
     int score = 0;
     int total = 0;
     cJSON *q_node;
-    cJSON_ArrayForEach(q_node, questions) {
+    cJSON_ArrayForEach(q_node, questions)
+    {
         total++;
-        char *q_id = q_node->string; 
+        char *q_id = q_node->string;
         cJSON *correct = cJSON_GetObjectItem(q_node, "correct_answer");
         cJSON *user_ans = cJSON_GetObjectItem(user_answers, q_id);
-        
-        if (user_ans && correct && cJSON_IsString(user_ans) && cJSON_IsString(correct)) {
-            if (strcasecmp(user_ans->valuestring, correct->valuestring) == 0) {
+
+        if (user_ans && correct && cJSON_IsString(user_ans) && cJSON_IsString(correct))
+        {
+            if (strcasecmp(user_ans->valuestring, correct->valuestring) == 0)
+            {
                 score++;
             }
         }
@@ -892,17 +907,18 @@ int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *u
     mysql_real_escape_string(conn, esc_ans, ans_str, strlen(ans_str));
 
     char update_query[512 * 2];
-    sprintf(update_query, 
-            "UPDATE practice_history SET user_answers='%s', score=%d, is_late=%d WHERE id=%d", 
+    sprintf(update_query,
+            "UPDATE practice_history SET user_answers='%s', score=%d, is_late=%d WHERE id=%d",
             esc_ans, score, is_late, history_id);
-    
-    if (mysql_query(conn, update_query)) {
+
+    if (mysql_query(conn, update_query))
+    {
         fprintf(stderr, "Update practice result failed: %s\n", mysql_error(conn));
     }
-    
-    free(esc_ans); 
+
+    free(esc_ans);
     free(ans_str);
     cJSON_Delete(questions);
-    
+
     return 1;
 }

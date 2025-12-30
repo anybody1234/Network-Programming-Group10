@@ -35,7 +35,7 @@ void handle_create_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         return;
     }
     struct tm tm_start = {0};
-    if (strptime(start_time, "%Y-%m-%d %H:%M:%S", &tm_start) == NULL) 
+    if (strptime(start_time, "%Y-%m-%d %H:%M:%S", &tm_start) == NULL)
     {
         send_json_response(session->sockfd, 400, "Invalid date format. Use: YYYY-MM-DD HH:MM:SS");
         return;
@@ -43,7 +43,7 @@ void handle_create_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
     time_t t_start = mktime(&tm_start);
     time_t t_now = time(NULL);
 
-    if (t_start == -1) 
+    if (t_start == -1)
     {
         send_json_response(session->sockfd, 400, "Invalid time value");
         return;
@@ -118,7 +118,8 @@ void handle_list_rooms(ClientSession *session, MYSQL *db_conn)
     cJSON_AddItemToObject(resp, "rooms", rooms_array);
     send_cjson_packet(session->sockfd, resp);
     cJSON_Delete(resp);
-    if (rooms) free(rooms);
+    if (rooms)
+        free(rooms);
 }
 
 void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
@@ -172,17 +173,17 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
             }
             return;
         }
-        if (is_participant_score != -1)
-        {
-            char msg[128];
-            sprintf(msg, "Forbidden: You have already submitted the exam with score recorded with score: %d", is_participant_score);
-            send_json_response(session->sockfd, 200, msg);
-            if (room.questions_data)
+            if (is_participant_score != -1)
             {
-                free(room.questions_data);
+                char msg[128];
+                sprintf(msg, "Forbidden: You have already submitted the exam with score recorded with score: %d", is_participant_score);
+                send_json_response(session->sockfd, 409, msg);
+                if (room.questions_data)
+                {
+                    free(room.questions_data);
+                }
+                return;
             }
-            return;
-        }
         time_t start_epoch = (time_t)atoll(room.start_time);
         time_t now = time(NULL);
         int elapsed = (int)(now - start_epoch);
@@ -197,7 +198,7 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
         char *saved_answers_str = db_get_user_answers_json(db_conn, room_id, session->user_id);
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "EXAM_START");
-        cJSON_AddNumberToObject(resp, "status", 300);
+            cJSON_AddNumberToObject(resp, "status", 200);
         cJSON_AddNumberToObject(resp, "room_id", room_id);
         cJSON_AddStringToObject(resp, "message", "Resuming exam...");
         cJSON_AddNumberToObject(resp, "duration", room.duration_minutes * 60);
@@ -233,34 +234,44 @@ void handle_join_room(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
     }
 }
 
-void handle_update_answers(ClientSession *session, cJSON *req_json, MYSQL *db_conn) {
-    if (!session->is_logged_in) {
+void handle_update_answers(ClientSession *session, cJSON *req_json, MYSQL *db_conn)
+{
+    if (!session->is_logged_in)
+    {
         send_json_response(session->sockfd, 401, "Unauthorized");
         return;
     }
     cJSON *r_item = cJSON_GetObjectItem(req_json, "room_id");
     cJSON *q_item = cJSON_GetObjectItem(req_json, "question_id");
     cJSON *a_item = cJSON_GetObjectItem(req_json, "answer");
-    if (!cJSON_IsNumber(r_item) || !a_item) {
+    if (!cJSON_IsNumber(r_item) || !a_item)
+    {
         return;
     }
     int room_id = r_item->valueint;
     char *answer = a_item->valuestring;
     char q_id_str[32];
-    if (cJSON_IsNumber(q_item)) {
+    if (cJSON_IsNumber(q_item))
+    {
         sprintf(q_id_str, "%d", q_item->valueint);
-    } else if (cJSON_IsString(q_item)) {
+    }
+    else if (cJSON_IsString(q_item))
+    {
         snprintf(q_id_str, sizeof(q_id_str), "%s", q_item->valuestring);
-    } else {
+    }
+    else
+    {
         return;
     }
-    if (!db_validate_question_id(db_conn, room_id, q_id_str)) {
-        printf("[WARN] User %d tried to answer invalid Question ID: %s in Room %d\n", 
+    if (!db_validate_question_id(db_conn, room_id, q_id_str))
+    {
+        printf("[WARN] User %d tried to answer invalid Question ID: %s in Room %d\n",
                session->user_id, q_id_str, room_id);
         send_json_response(session->sockfd, 400, "Invalid Question ID");
-        return; 
+        return;
     }
-    if (db_update_user_answers(db_conn, room_id, session->user_id, q_id_str, answer) == 1) {
+    if (db_update_user_answers(db_conn, room_id, session->user_id, q_id_str, answer) == 1)
+    {
         printf("[INFO] User %d updated Q%s = %s\n", session->user_id, q_id_str, answer);
         if (db_recalculate_score(db_conn, room_id, session->user_id) == 1)
         {
@@ -428,18 +439,7 @@ void handle_get_room_scores(ClientSession *session, cJSON *req_json, MYSQL *db_c
         }
         cJSON_AddItemToObject(resp, "scores", arr);
 
-        char *json_str = cJSON_PrintUnformatted(resp);
-        if (json_str)
-        {
-            char *packet = (char *)malloc(strlen(json_str) + 3);
-            if (packet)
-            {
-                sprintf(packet, "%s\r\n", json_str);
-                send(session->sockfd, packet, strlen(packet), 0);
-                free(packet);
-            }
-            free(json_str);
-        }
+        send_cjson_packet(session->sockfd, resp);
         if (items)
             free(items);
         cJSON_Delete(resp);
@@ -472,59 +472,58 @@ void handle_get_room_scores(ClientSession *session, cJSON *req_json, MYSQL *db_c
         cJSON_AddNumberToObject(resp, "room_id", room_id);
         cJSON_AddNumberToObject(resp, "score", score);
 
-        char *json_str = cJSON_PrintUnformatted(resp);
-        if (json_str)
-        {
-            char *packet = (char *)malloc(strlen(json_str) + 3);
-            if (packet)
-            {
-                sprintf(packet, "%s\r\n", json_str);
-                send(session->sockfd, packet, strlen(packet), 0);
-                free(packet);
-            }
-            free(json_str);
-        }
+        send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
         return;
     }
 }
 
-void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn) {
-    if (!session->is_logged_in) return;
+void handle_practice_start(ClientSession *session, cJSON *req, MYSQL *conn)
+{
+    if (!session->is_logged_in)
+        return;
     int num = 10;
-    int duration = 15; 
+    int duration = 15;
     cJSON *n_item = cJSON_GetObjectItem(req, "num_questions");
-    if (cJSON_IsNumber(n_item)) num = n_item->valueint;
+    if (cJSON_IsNumber(n_item))
+        num = n_item->valueint;
     cJSON *d_item = cJSON_GetObjectItem(req, "duration");
-    if (cJSON_IsNumber(d_item)) duration = d_item->valueint;
+    if (cJSON_IsNumber(d_item))
+        duration = d_item->valueint;
 
     cJSON *questions = NULL;
     int history_id = db_generate_questions_for_practice(conn, session->user_id, num, duration, &questions);
-    if (history_id > 0) {
+    if (history_id > 0)
+    {
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "PRACTICE_START_OK");
         cJSON_AddNumberToObject(resp, "status", 200);
         cJSON_AddNumberToObject(resp, "history_id", history_id);
-        cJSON_AddNumberToObject(resp, "duration", duration * 60); 
+        cJSON_AddNumberToObject(resp, "duration", duration * 60);
         cJSON_AddNumberToObject(resp, "remaining", duration * 60);
-        cJSON_AddItemToObject(resp, "questions", questions); 
+        cJSON_AddItemToObject(resp, "questions", questions);
         send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
-        
+
         printf("[INFO] User %s started practice %d\n", session->username, history_id);
-    } else {
+    }
+    else
+    {
         send_json_response(session->sockfd, 500, "Failed to create practice session (Not enough questions?)");
     }
 }
 
-void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn) {
-    if (!session->is_logged_in) return;
+void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn)
+{
+    if (!session->is_logged_in)
+        return;
 
     int h_id = cJSON_GetObjectItem(req, "history_id")->valueint;
-    cJSON *answers = cJSON_GetObjectItem(req, "answers"); 
+    cJSON *answers = cJSON_GetObjectItem(req, "answers");
 
     int score = 0, total = 0, is_late = 0;
-    if (db_submit_practice_result(conn, h_id, session->user_id, answers, &score, &total, &is_late)) {
+    if (db_submit_practice_result(conn, h_id, session->user_id, answers, &score, &total, &is_late))
+    {
         cJSON *resp = cJSON_CreateObject();
         cJSON_AddStringToObject(resp, "type", "PRACTICE_RESULT");
         cJSON_AddNumberToObject(resp, "status", 200);
@@ -533,9 +532,11 @@ void handle_practice_submit(ClientSession *session, cJSON *req, MYSQL *conn) {
         cJSON_AddNumberToObject(resp, "is_late", is_late);
         send_cjson_packet(session->sockfd, resp);
         cJSON_Delete(resp);
-        printf("[INFO] User %s submitted practice %d. Score: %d/%d (Late: %d)\n", 
+        printf("[INFO] User %s submitted practice %d. Score: %d/%d (Late: %d)\n",
                session->username, h_id, score, total, is_late);
-    } else {
+    }
+    else
+    {
         send_json_response(session->sockfd, 500, "Error submitting practice");
     }
 }

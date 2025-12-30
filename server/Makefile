@@ -6,6 +6,7 @@ SRCS = src/server.c \
        src/config/db.c \
        src/service/auth_service.c \
        src/service/room_service.c \
+       src/utils/logger.c \
        src/utils/net_utils.c \
        src/route/route.c
 

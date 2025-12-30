@@ -3,23 +3,28 @@
 #include <stdlib.h>
 #include "route.h"
 #include "../utils/net_utils.h"
+#include "../utils/logger.h"
 #include <cjson/cJSON.h>
 #include "../service/auth_service.h"
 #include "../service/room_service.h"
 void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
 {
+    protocol_set_current_request_for_log(json_str);
     printf("[DEBUG] User '%s'| Id '%d': %s\n", client->is_logged_in ? client->username : "Guest", client->user_id, json_str);
     cJSON *json = cJSON_Parse(json_str);
     if (json == NULL)
     {
         send_json_response(client->sockfd, 400, "Invalid JSON format");
+        protocol_clear_current_request_for_log();
         return;
     }
+
     cJSON *type_item = cJSON_GetObjectItem(json, "type");
     if (!cJSON_IsString(type_item))
     {
         send_json_response(client->sockfd, 400, "Missing request type");
         cJSON_Delete(json);
+        protocol_clear_current_request_for_log();
         return;
     }
     char *type = type_item->valuestring;
@@ -39,8 +44,7 @@ void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
             client->user_id = -1;
             client->username[0] = '\0';
             send_json_response(client->sockfd, 202, "Logout successful");
-  
-      }
+        }
         else
         {
             send_json_response(client->sockfd, 401, "Not logged in");
@@ -74,14 +78,18 @@ void route_request(ClientSession *client, char *json_str, MYSQL *db_conn)
     {
         handle_get_room_scores(client, json, db_conn);
     }
-    else if (strcmp(type, "PRACTICE_START") == 0) {
+    else if (strcmp(type, "PRACTICE_START") == 0)
+    {
         handle_practice_start(client, json, db_conn);
     }
-    else if (strcmp(type, "PRACTICE_SUBMIT") == 0) {
+    else if (strcmp(type, "PRACTICE_SUBMIT") == 0)
+    {
         handle_practice_submit(client, json, db_conn);
     }
-    else {
+    else
+    {
         send_json_response(client->sockfd, 400, "Unknown request type");
     }
     cJSON_Delete(json);
+    protocol_clear_current_request_for_log();
 }

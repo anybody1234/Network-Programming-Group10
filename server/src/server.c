@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include "service/auth_service.h"
 #include "utils/net_utils.h"
+#include "utils/logger.h"
 #include <cjson/cJSON.h>
 
 #define PORT 5500
@@ -88,8 +89,9 @@ void *room_monitor_thread(void *arg)
                         client_sessions[s].is_logged_in &&
                         client_sessions[s].user_id == target_uid)
                     {
-
-                        send(client_sessions[s].sockfd, packet, strlen(packet), 0);
+                        protocol_set_current_request_for_log("EXAM_START");
+                        send_cjson_packet(client_sessions[s].sockfd, resp);
+                        protocol_clear_current_request_for_log();
                         printf(" -> Sent exam to UserID %d\n", target_uid);
                     }
                 }
@@ -131,7 +133,9 @@ void *room_monitor_thread(void *arg)
                         client_sessions[s].is_logged_in &&
                         client_sessions[s].user_id == target_uid)
                     {
-                        send(client_sessions[s].sockfd, packet, strlen(packet), 0);
+                        protocol_set_current_request_for_log("EXAM_END");
+                        send_cjson_packet(client_sessions[s].sockfd, resp);
+                        protocol_clear_current_request_for_log();
                     }
                 }
             }
