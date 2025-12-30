@@ -15,9 +15,10 @@ void process_server_response(char *json_str)
     char *type_str = type ? type->valuestring : "";
     char *message = msg ? msg->valuestring : "";
     if (code >= 400) {
-        printf("\n[LOI SERVER %d] %s\n", code, message);
+        printf("\n[ERR %d] %s\n", code, message);
         if (current_screen == SCREEN_AUTH) {
-             printf("Nhan Enter de thu lai..."); fflush(stdout);
+            printf("Nhan Enter de thu lai..."); 
+            fflush(stdout);
         }
         else if (current_screen == SCREEN_EXAM || current_screen == SCREEN_PRACTICE) {
             printf("\n>>> LOI XAY RA: %s <<<\n", message);
@@ -231,22 +232,7 @@ void process_server_response(char *json_str)
     }
     else
     {
-        if (message && strlen(message) > 0)
-            printf("\n[SERVER] %s\n", message);
 
-        if (code >= 400)
-        {
-            if (current_screen == SCREEN_SCORE_VIEW)
-            {
-                current_screen = SCREEN_SCORE_ROOM_LIST;
-                needs_redraw = 1;
-            }
-            else if (current_screen == SCREEN_SCORE_ROOM_LIST)
-            {
-                current_screen = SCREEN_SCORE_ROLE;
-                needs_redraw = 1;
-            }
-        }
     }
 
     cJSON_Delete(json);
