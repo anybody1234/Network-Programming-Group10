@@ -2,6 +2,7 @@
 
 # Compiled binaries
 server/server
+client/client
 *.o
 *.exe
 *.so
