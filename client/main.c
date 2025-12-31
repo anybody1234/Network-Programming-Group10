@@ -181,7 +181,6 @@ int main()
                         }
                         else if (strcmp(line, "4") == 0)
                         {
-                            /* send LOGOUT to server and clear local session state */
                             cJSON *req = cJSON_CreateObject();
                             cJSON_AddStringToObject(req, "type", "LOGOUT");
                             send_json_request(req);
