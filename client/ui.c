@@ -332,23 +332,38 @@ void ui_handle_register_input()
     send_json_request(req);
     cJSON_Delete(req);
 }
-
+void trim_newline(char *str) {
+    str[strcspn(str, "\n")] = 0;
+}
 void ui_handle_create_room()
 {
+    char input_buffer[256];
     char name[50];
     int n, m;
     char start_time[100];
 
     printf("\n--- TAO PHONG ---\n");
+    printf("(Nhap 'q' bat ky luc nao de quay lai)\n");
     printf("Ten phong: ");
-    scanf(" %[^\n]", name);
+    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) return;
+    trim_newline(input_buffer);
+    if (strcasecmp(input_buffer, "q") == 0 || strlen(input_buffer) == 0) return;
+    strncpy(name, input_buffer, sizeof(name) - 1);
     printf("So luong cau hoi: ");
-    scanf("%d", &n);
+    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) return;
+    trim_newline(input_buffer);
+    if (strcasecmp(input_buffer, "q") == 0) return;
+    n = atoi(input_buffer);
     printf("Thoi gian (phut): ");
-    scanf("%d", &m);
+    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) return;
+    trim_newline(input_buffer);
+    if (strcasecmp(input_buffer, "q") == 0) return;
+    m = atoi(input_buffer);
     printf("Thoi gian bat dau (YYYY-MM-DD HH:MM:SS): ");
-    scanf(" %[^\n]", start_time);
-    flush_input(); 
+    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) return;
+    trim_newline(input_buffer);
+    if (strcasecmp(input_buffer, "q") == 0) return;
+    strncpy(start_time, input_buffer, sizeof(start_time) - 1);
 
     cJSON *req = cJSON_CreateObject();
     cJSON_AddStringToObject(req, "type", "CREATE_ROOM");
@@ -363,11 +378,20 @@ void ui_handle_create_room()
 
 void ui_handle_join_room()
 {
+    char input_buffer[100];
     int id;
-    printf("\nNhap ID phong: ");
-    scanf("%d", &id);
-    flush_input();
 
+    printf("\nNhap ID phong (Go 'q' de quay lai): ");
+    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) return;
+    trim_newline(input_buffer);
+    if (strcasecmp(input_buffer, "q") == 0 || strlen(input_buffer) == 0) {
+        return;
+    }
+    id = atoi(input_buffer);
+    if (id <= 0) {
+        printf("ID phong khong hop le!\n");
+        return;
+    }
     cJSON *req = cJSON_CreateObject();
     cJSON_AddStringToObject(req, "type", "JOIN_ROOM");
     cJSON_AddNumberToObject(req, "room_id", id);
