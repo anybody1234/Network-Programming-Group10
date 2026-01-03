@@ -134,6 +134,7 @@ void *room_monitor_thread(void *arg)
                         client_sessions[s].user_id == target_uid)
                     {
                         protocol_set_current_request_for_log("EXAM_END");
+                        db_update_room_participant_status(thread_db, r_id, target_uid, 1);
                         send_cjson_packet(client_sessions[s].sockfd, resp);
                         protocol_clear_current_request_for_log();
                     }

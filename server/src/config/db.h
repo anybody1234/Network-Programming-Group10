@@ -74,5 +74,5 @@ int db_validate_question_id(MYSQL *conn, int room_id, const char *question_id);
 
 int db_generate_questions_for_practice(MYSQL *conn, int user_id, int num_questions, int duration, cJSON **out_questions);
 int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *user_answers, int *out_score, int *out_total, int *out_is_late);
-
+int db_update_room_participant_status(MYSQL *conn, int room_id, int user_id, int new_status);
 #endif

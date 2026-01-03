@@ -922,3 +922,15 @@ int db_submit_practice_result(MYSQL *conn, int history_id, int user_id, cJSON *u
 
     return 1;
 }
+
+int db_update_room_participant_status(MYSQL *conn, int room_id, int user_id, int new_status)
+{
+    char query[256];
+    sprintf(query, "UPDATE room_participants SET status = %d WHERE room_id = %d AND user_id = %d", new_status, room_id, user_id);
+    if (mysql_query(conn, query))
+    {
+        fprintf(stderr, "Update participant status failed: %s\n", mysql_error(conn));
+        return -1;
+    }
+    return 1;
+}
