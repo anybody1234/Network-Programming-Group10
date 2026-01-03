@@ -232,7 +232,22 @@ void process_server_response(char *json_str)
     }
     else
     {
+        if (message && strlen(message) > 0)
+            printf("\n[SERVER] %s\n", message);
 
+        if (code >= 400)
+        {
+            if (current_screen == SCREEN_SCORE_VIEW)
+            {
+                current_screen = SCREEN_SCORE_ROOM_LIST;
+                needs_redraw = 1;
+            }
+            else if (current_screen == SCREEN_SCORE_ROOM_LIST)
+            {
+                current_screen = SCREEN_SCORE_ROLE;
+                needs_redraw = 1;
+            }
+        }
     }
 
     cJSON_Delete(json);
